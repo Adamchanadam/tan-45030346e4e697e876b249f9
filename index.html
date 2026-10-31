@@ -636,6 +636,14 @@ footer{color:var(--tx-dim)}
 @media (prefers-reduced-motion:reduce){.fr-btn.spin svg{animation:none}.fr-res{transition:none}}
 .fresh .fr-row:first-child{flex-wrap:nowrap}.fr-txt{min-width:0}
 .fr-warn{margin-top:2px;font-weight:700;color:#ffb4a6;letter-spacing:.04em}.fr-warn[hidden]{display:none}
+
+.lk-form{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;width:min(86vw,340px);margin-top:6px}
+.lk-form input{flex:1 1 200px;min-width:0;height:44px;padding:0 14px;border-radius:12px;border:1px solid rgba(217,182,108,.5);background:rgba(8,30,22,.7);color:#efe4c6;font-size:16px;outline:none}
+.lk-form input::placeholder{color:rgba(239,228,198,.5)}
+.lk-form input:focus{border-color:var(--gold-hi);box-shadow:0 0 0 3px rgba(217,182,108,.2)}
+.lk-form button{height:44px;padding:0 20px;border-radius:12px;border:0;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#10281f;font-weight:700;font-size:16px;font-family:var(--serif);letter-spacing:.2em}
+#lkerr{flex-basis:100%;text-align:center;min-height:1.2em;font-size:var(--fs-xs);color:#ffb4a6}
+#hsrow[hidden]{display:none}#hsrow{margin-top:4px}
 </style>
 </head>
 <body>
@@ -643,7 +651,7 @@ footer{color:var(--tx-dim)}
   <symbol id="fleur" viewBox="0 0 24 24"><path d="M12 1.5c-1.9 2.2-2.8 4.4-2.8 6.6 0 1.9.9 3.6 2.8 5 1.9-1.4 2.8-3.1 2.8-5 0-2.2-.9-4.4-2.8-6.6zM2.6 7.6c-2 2.6-1 6.3 2.1 7.1 1.8.5 3.4.1 4.7-1-1-.1-2-.6-2.7-1.4-1.1-1.3-.7-3.4.9-4.1C5.8 6.7 3.9 6.5 2.6 7.6zm18.8 0c2 2.6 1 6.3-2.1 7.1-1.8.5-3.4.1-4.7-1 1-.1 2-.6 2.7-1.4 1.1-1.3.7-3.4-.9-4.1 1.8-1.5 3.7-1.7 5-.6zM6.5 14.6h11v2h-11zM10.6 16.6h2.8l1.6 5.9h-6z"/></symbol>
 </svg>
 <div id="loader" aria-live="polite"><img src="assets/ui/crest-clean.webp" alt="嘆王國"><div class="bar"><i></i></div><p>開門中</p></div>
-<div id="lock" hidden><div class="lk"><div class="lk-c"><span class="lk-halo"></span><img src="assets/ui/crest-clean.webp" alt="嘆王國"></div><div class="lk-line"><i></i></div><p id="lockmsg">需要專屬連結</p></div></div>
+<div id="lock" hidden><div class="lk"><div class="lk-c"><span class="lk-halo"></span><img src="assets/ui/crest-clean.webp" alt="嘆王國"></div><div class="lk-line"><i></i></div><p id="lockmsg">需要專屬連結</p><form id="lkform" class="lk-form" hidden autocomplete="off"><input id="lkin" type="text" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" aria-label="貼上專屬連結或金鑰" placeholder="貼上專屬連結或金鑰"><button type="submit">解鎖</button><span id="lkerr" role="status"></span></form></div></div>
 <div id="app">
   <header class="hdr" id="hdr">
     <div class="rail"></div>
@@ -697,6 +705,7 @@ footer{color:var(--tx-dim)}
     <div class="fr-row"><i class="fr-dot"></i><span class="fr-txt" id="frtxt" aria-live="polite"></span></div>
     <div class="fr-warn" id="frwarn" role="alert" hidden></div>
     <div class="fr-row"><button class="fr-btn" id="refresh" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span>立即更新</span></button><span class="fr-res" id="frres" role="status" aria-live="polite"></span></div>
+    <div class="fr-row" id="hsrow" hidden><button class="fr-btn" id="hsbtn" type="button"><span>設定主畫面版</span></button><span class="fr-res show" id="hsmsg" role="status"></span></div>
   </section>
   <footer id="foot"></footer>
 </div>
@@ -1061,6 +1070,7 @@ function renderFresh(){const f=$('#fresh');if(!f)return;const g=genOf(DATA);
 const b64=s=>{s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const isStandalone=()=>!!(navigator.standalone||(matchMedia&&matchMedia('(display-mode: standalone)').matches));
 let KEY=null,cipherTxt=null,etag=null,fails=0,pollT=0,locked=true;
 function takeKeys(){ // fragment key first (then forget the fragment), stored key second
   const m=/(?:^#|&)k=([A-Za-z0-9_-]{43})(?=&|$)/.exec(location.hash);
@@ -1075,7 +1085,7 @@ async function fetchStatus(){ // → ciphertext text, or null when unchanged (30
   const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store',headers:h});
   if(r.status===304)return null;if(!r.ok)throw new Error('http');
   const et=r.headers.get('ETag');const txt=await r.text();if(et)etag=et;return txt}
-function showLock(msg){locked=true;const L=$('#lock');$('#lockmsg').textContent=msg||'需要專屬連結';L.hidden=false;
+function showLock(msg){locked=true;const L=$('#lock');$('#lockmsg').textContent=msg||(isStandalone()?'請貼上專屬連結':'需要專屬連結');L.hidden=false;$('#lkform').hidden=!!msg;
   closeSheet();$('#app').classList.remove('ready');$('#app').setAttribute('aria-hidden','true');
   // wipe anything rendered from data
   DATA=null;M=null;for(const id in dollEls){dollEls[id].remove()}dollEls={};$('#stage').querySelectorAll('.orphan').forEach(e=>e.remove());
@@ -1218,6 +1228,18 @@ async function reveal(){if(revealed){$('#app').classList.add('ready');return}rev
   setInterval(()=>{if(document.hidden)return;clock();if(!locked&&DATA){renderConn();renderFresh()}},1000);
   $('#refresh').addEventListener('click',manualRefresh);
   setTimeout(actLoop,2500)})();
+
+/* unlock by paste (home-screen apps keep their own storage, so they need the key once) */
+$('#lkform').addEventListener('submit',e=>{e.preventDefault();const v=$('#lkin').value.trim(),m=/(?:[#&?]k=|^)([A-Za-z0-9_-]{43})(?=&|$)/.exec(v);
+  if(!m){$('#lkerr').textContent='唔係有效嘅連結或金鑰，請重新貼上';return}
+  $('#lkerr').textContent='';$('#lkin').value='';lsSet(LS_K,m[1]);location.reload()});
+/* in Safari: bring the key back into the address once, so "Add to Home Screen" saves a link that already carries it */
+(function(){const row=$('#hsrow'),btn=$('#hsbtn'),msg=$('#hsmsg');if(!row||isStandalone())return;
+  setInterval(()=>{row.hidden=!(KEY&&!locked&&lsGet(LS_K))},1500);
+  btn.addEventListener('click',()=>{const k=lsGet(LS_K);if(!k)return;
+    try{history.replaceState(null,'',location.pathname+location.search+'#k='+k)}catch(e){}
+    msg.textContent='已準備好。請即撳 Safari 底部「分享」→「加入主畫面」';
+    clearTimeout(btn._t);btn._t=setTimeout(()=>{try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}msg.textContent=''},90000)})})();
 addEventListener('hashchange',()=>{if(/(?:^#|&)k=/.test(location.hash))location.reload()}); // key link pasted into an already-open tab
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(pollT);return}light(false);clock();if(KEY)tick()});
 })();

@@ -1218,6 +1218,7 @@ async function reveal(){if(revealed){$('#app').classList.add('ready');return}rev
   setInterval(()=>{if(document.hidden)return;clock();if(!locked&&DATA){renderConn();renderFresh()}},1000);
   $('#refresh').addEventListener('click',manualRefresh);
   setTimeout(actLoop,2500)})();
+addEventListener('hashchange',()=>{if(/(?:^#|&)k=/.test(location.hash))location.reload()}); // key link pasted into an already-open tab
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(pollT);return}light(false);clock();if(KEY)tick()});
 })();
 </script>

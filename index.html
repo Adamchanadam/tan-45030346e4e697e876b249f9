@@ -704,7 +704,7 @@ footer{color:var(--tx-dim)}
   <section class="fresh" id="fresh" aria-label="資料新舊">
     <div class="fr-row"><i class="fr-dot"></i><span class="fr-txt" id="frtxt" aria-live="polite"></span></div>
     <div class="fr-warn" id="frwarn" role="alert" hidden></div>
-    <div class="fr-row"><button class="fr-btn" id="refresh" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span>立即更新</span></button><span class="fr-res" id="frres" role="status" aria-live="polite"></span></div>
+    <div class="fr-row"><button class="fr-btn" id="refresh" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span>檢查新資料</span></button><span class="fr-res" id="frres" role="status" aria-live="polite"></span></div>
     <div class="fr-row" id="hsrow" hidden><button class="fr-btn" id="hsbtn" type="button"><span>設定主畫面版</span></button><span class="fr-res show" id="hsmsg" role="status"></span></div>
   </section>
   <footer id="foot"></footer>
@@ -1060,7 +1060,9 @@ function apply(d){DATA=d;M=build(d);renderSeals();renderConn();renderNotices();r
   $('#foot').innerHTML=`只讀頁面 · 加密資料每 10 秒自動同步 · 時間為倫敦時間（${tzAbbr(M.n)}）`;renderFresh();reopen()}
 /* freshness = generatedAt of the decrypted data (not the poll timer) */
 const genOf=d=>{const t=d&&T(d.generatedAt);return t==null||isNaN(t)?null:t};
-const FRESH_WARN=36e5,FRESH_BAD=6*36e5;
+const FRESH_WARN=7*36e5,FRESH_BAD=9*36e5; /* auto-publish every 6 h (01/07/13/19 London) */
+const PUB_HOURS=[1,7,13,19];
+function nextSlot(){const f=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hour12:false});let t=Math.ceil(Date.now()/36e5)*36e5;for(let i=0;i<30;i++,t+=36e5){const h=+f.format(t).slice(0,2);if(PUB_HOURS.includes(h%24))return f.format(t)}return '—'}
 function renderFresh(){const f=$('#fresh');if(!f)return;const g=genOf(DATA);
   if(!DATA){f.className='fresh';$('#frtxt').textContent='';return}
   const age=g==null?Infinity:now()-g,lv=age>FRESH_BAD?'bad':age>FRESH_WARN?'warn':'ok';
@@ -1108,12 +1110,12 @@ async function tick(){
   schedule(fails?Math.min(POLL_MAX,POLL_MS*(1+fails)):POLL_MS)}
 let refBusy=false;
 async function manualRefresh(){if(refBusy||!KEY||locked)return;refBusy=true;const b=$('#refresh'),res=$('#frres');
-  b.classList.add('spin');b.setAttribute('aria-busy','true');res.className='fr-res';res.textContent='更新中…';
+  b.classList.add('spin');b.setAttribute('aria-busy','true');res.className='fr-res';res.textContent='檢查中…';
   const before=genOf(DATA);let out,cls;
   try{const r=await fetch(DATA_URL+'?t='+Date.now()+'&r=1',{cache:'no-store'});if(!r.ok)throw new Error('http');
     const txt=await r.text(),d=await openBox(txt,KEY),g=genOf(d);fails=0;lastOk=Date.now();mode='live';
     if(g!=null&&(before==null||g>before)){cipherTxt=txt;lsSet(LS_C,JSON.stringify({t:lastOk,txt}));ingest(d);out=`有新資料 ✓（${parts(g).hm} ${tzAbbr(g)} 版本）`;cls='new'}
-    else{out=`已是最新（資料 ${g!=null?parts(g).hm+' '+tzAbbr(g):'—'}）`;cls='same'}
+    else{out=`暫時冇新發佈（資料 ${g!=null?parts(g).hm+' '+tzAbbr(g):'—'}），下次發佈約 ${nextSlot()}`;cls='same'}
     renderConn();pulseConn()}
   catch(e){out='攞唔到資料，請稍後再試';cls='fail';if(!navigator.onLine||e.message==='http'||e instanceof TypeError){mode='offline';renderConn()}}
   res.className='fr-res show '+cls;res.textContent=out;b.classList.remove('spin');b.removeAttribute('aria-busy');

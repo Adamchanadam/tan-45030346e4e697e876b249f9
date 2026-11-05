@@ -646,7 +646,7 @@ footer{color:var(--tx-dim)}
 #hsrow[hidden]{display:none}#hsrow{margin-top:4px}
 
 
-/* ===== FX pack: sun disk, gaze, status loops, persist drag, wallpaper ===== */
+/* ===== FX pack: sun disk, status loops, persist drag, wallpaper ===== */
 .sky .sun{position:absolute;left:var(--sunL,18%);top:var(--sunT,70%);width:14%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
   background:radial-gradient(circle at 42% 40%,#fff7d6 0%,#ffd27a 45%,#f0a040 78%,rgba(240,140,40,0) 100%);
   box-shadow:0 0 14px 6px rgba(255,200,100,.55),0 0 36px 14px rgba(255,160,60,.28);opacity:0;transition:opacity 58s linear,left 58s linear,top 58s linear;pointer-events:none}
@@ -654,15 +654,6 @@ footer{color:var(--tx-dim)}
 .stage[data-tod="dawn"] .sky .sun,.stage[data-tod="day"] .sky .sun,.stage[data-tod="dusk"] .sky .sun{opacity:var(--sunOp,.85)}
 .stage[data-tod="night"] .sky .sun{opacity:0}
 .sky i.extra{width:1.5px;height:1.5px}
-
-/* gaze: soft head turn + eye glints */
-.doll .gaze{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3}
-.doll .gaze i{position:absolute;width:3.2%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#f3e7bf 55%,transparent 72%);
-  box-shadow:0 0 2px rgba(255,248,220,.7);opacity:.55;transform:translate(calc(var(--gx,0)*1.1px),calc(var(--gy,0)*1.1px));transition:transform .18s ease-out}
-.doll .gaze i:nth-child(1){left:42%;top:26%}.doll .gaze i:nth-child(2){left:53%;top:26%}
-.doll.big .gaze i{top:24%;width:2.6%}
-.doll .breath{transform:translate(calc(var(--gx,0)*0.35px),calc(var(--gy,0)*0.2px)) rotate(calc(var(--gx,0)*0.35deg));transition:transform .2s ease-out}
-.doll.dragging .breath,.doll.act-look .breath,.doll.act-wave .breath,.doll.act-doze .breath{transition:none}
 
 /* persistent status FX (from existing status data only) */
 .doll .stfx{position:absolute;inset:0;pointer-events:none;z-index:4}
@@ -694,9 +685,7 @@ body.wallpaper .stage{inset:0}
 
 @media (prefers-reduced-motion:reduce){
   .sky .sun{transition:none!important}
-  .doll .breath,.doll .gaze i{transition:none!important}
-  .doll.st-busy .stfx .bub i,.doll.st-wait .stfx .hand,.doll.st-alert .stfx .warn{animation:none!important}
-  .doll .gaze i{opacity:.4}
+    .doll.st-busy .stfx .bub i,.doll.st-wait .stfx .hand,.doll.st-alert .stfx .warn{animation:none!important}
 }
 </style>
 </head>
@@ -957,7 +946,7 @@ function renderOffice(){
     const si=slotOf[b.id];if(si==null)return;const s=SLOTS[si];seen.add(b.id);
     let el=dollEls[b.id];
     if(!el){el=document.createElement('button');el.className='doll';el.dataset.id=b.id;
-      el.innerHTML=`<div class="pop"><div class="bounce"><div class="act"><div class="breath"><img alt="" draggable="false"><span class="gaze" aria-hidden="true"><i></i><i></i></span></div></div><span class="shadow"></span></div>
+      el.innerHTML=`<div class="pop"><div class="bounce"><div class="act"><div class="breath"><img alt="" draggable="false"></div></div><span class="shadow"></span></div>
         <span class="plate"><b></b><i class="ct"></i></span><span class="tagx"></span><span class="fx"></span><span class="stfx"></span><span class="live"></span><span class="rxl"></span><span class="say"></span><span class="rxsay"></span></div>`;
       stage.appendChild(el);dollEls[b.id]=el;bindDoll(el)}
     const img=el.querySelector('img');const src=ASSETS['dolls/'+(b.doll||b.id)]||ASSETS['dolls/_none'];if(img.getAttribute('src')!==src)img.src=src;
@@ -1305,20 +1294,6 @@ function rx(el,k){if(!el||(el._rxCd||0)>Date.now())return;el._rxCd=Date.now()+60
     el.querySelector('.rxl').innerHTML=h+'</span>'}
   el.classList.remove('rx','rx-done','rx-new','rx-over');void el.offsetWidth;el.classList.add('rx','rx-'+k);
   setTimeout(()=>{el.classList.remove('rx','rx-done','rx-new','rx-over');el.querySelector('.rxl').innerHTML='';el._rx=0},2600)}
-/* ---------- gaze (eyes follow pointer / touch) ---------- */
-let gazeRaf=0, gazeXY=null;
-function applyGaze(){gazeRaf=0;if(!gazeXY||RM.matches||locked||WALLPAPER&&!PREVIEW){/* wallpaper still tracks if pointer exists */}
-  if(!gazeXY||RM.matches||locked)return;
-  const {x,y}=gazeXY;const st=$('#stage');if(!st)return;const sg=st.getBoundingClientRect();
-  for(const id in dollEls){const el=dollEls[id];if(el.classList.contains('dragging'))continue;
-    const r=el.getBoundingClientRect();const cx=r.left+r.width*.5,cy=r.top+r.height*.28;
-    const dx=(x-cx)/Math.max(80,sg.width*.35), dy=(y-cy)/Math.max(80,sg.height*.35);
-    const gx=Math.max(-6,Math.min(6,dx*6)), gy=Math.max(-4,Math.min(4,dy*4));
-    el.style.setProperty('--gx',gx.toFixed(2));el.style.setProperty('--gy',gy.toFixed(2))}}
-function onGaze(e){const t=e.touches?e.touches[0]:e;if(!t)return;gazeXY={x:t.clientX,y:t.clientY};if(!gazeRaf)gazeRaf=requestAnimationFrame(applyGaze)}
-addEventListener('pointermove',onGaze,{passive:true});
-addEventListener('touchmove',onGaze,{passive:true});
-
 /* ---------- boot ---------- */
 document.querySelectorAll('.seal').forEach(el=>el.addEventListener('click',()=>{if(!M)return;filterK=filterK===el.dataset.k?null:el.dataset.k;applyFilter()}));
 $('#fbar-x').onclick=()=>{filterK=null;applyFilter()};$('#fbar-list').onclick=()=>filterK&&openList(filterK);

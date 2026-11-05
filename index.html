@@ -313,9 +313,10 @@ footer{padding:10px 18px 4px;text-align:center;font-size:var(--fs-xs);line-heigh
 .sh-head p{margin:3px 0 0;font-size:var(--fs-s);color:var(--ink2);line-height:1.45}
 .sh-close{position:absolute;right:8px;top:50%;margin-top:-27px;z-index:4;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:var(--fs-l);color:var(--ink2)}
 .sh-close::before{content:"";position:absolute;inset:8px;border-radius:50%;background:rgba(255,250,235,.7);box-shadow:var(--line);z-index:-1}
-.sh-banner{position:relative;flex:none;margin:0 12px 2px;height:88px;border-radius:var(--r-m);overflow:hidden;box-shadow:0 0 0 1px var(--gold-lo)}
-.sh-banner img{width:100%;height:100%;object-fit:cover;display:block}
-.sh-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(30,18,6,.35))}
+/* scene plate: same painting as the outer card, tall enough to keep the landmark (not a 66px skyline strip) */
+.sh-banner{position:relative;flex:none;margin:0 auto 8px;width:auto;max-width:calc(100% - 36px);height:clamp(210px,32dvh,268px);aspect-ratio:285/310;border-radius:var(--r-m);overflow:hidden;box-shadow:0 0 0 1px var(--gold-lo)}
+.sh-banner img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.sh-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 82%,rgba(30,18,6,.18));pointer-events:none}
 .sh-banner.later{background:radial-gradient(circle at 50% 50%,#2a6a52,#10301f)}
 .sh-body{position:relative;overflow-y:auto;overscroll-behavior:contain;padding:12px 14px 18px;-webkit-overflow-scrolling:touch}
 .sh-body h4{display:flex;align-items:center;gap:8px;margin:14px 2px 8px;font-family:var(--serif);font-size:var(--fs-m);letter-spacing:.12em;color:var(--ink2);font-weight:900}
@@ -468,9 +469,9 @@ footer{color:var(--tx-dim)}
 .sh-head .av{width:44px;height:44px}
 .sh-head h3{font-size:var(--fs-xl);line-height:1.2}
 .sh-head p{margin-top:2px}
-.sh-banner{margin:0 auto 8px;width:calc(100% - 24px);max-width:370px;height:auto;aspect-ratio:285/66;border-radius:var(--r-card);box-shadow:var(--edge),var(--lift)}
+.sh-banner{margin:0 auto 8px;width:auto;max-width:calc(100% - 36px);height:clamp(210px,32dvh,268px);aspect-ratio:285/310;border-radius:var(--r-card);box-shadow:var(--edge),var(--lift)}
 .sh-banner::before{content:"";position:absolute;inset:0;z-index:1;background:var(--grain);opacity:.10;mix-blend-mode:overlay;pointer-events:none}
-.sh-banner::after{background:linear-gradient(180deg,transparent 55%,rgba(30,18,6,.28))}
+.sh-banner::after{background:linear-gradient(180deg,transparent 82%,rgba(30,18,6,.18))}
 .sh-body{padding:8px 12px 16px}
 .sh-body h4{margin:10px 2px 6px;font-size:var(--fs-m)}
 .task{margin-bottom:7px;padding:9px 11px 8px 13px;border-radius:var(--r-card);background:var(--s-slip);box-shadow:0 1px 2px rgba(90,58,20,.22),0 0 0 .5px rgba(148,105,44,.35)}
